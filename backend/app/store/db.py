@@ -81,7 +81,7 @@ class Store:
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(db_path)
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._migrate()
 
@@ -135,14 +135,21 @@ class Store:
     def import_messages(
         self, conversation_id: str, platform: str, messages: list[Message]
     ) -> tuple[int, int]:
-        """Insert messages idempotently; returns (imported, duplicates)."""
+        """Insert messages idempotently; returns (imported, duplicates).
+
+        Parser-assigned reply_to ids are remapped to the store's stable
+        content-derived ids after insertion, so reply threads survive
+        re-imports of overlapping exports.
+        """
         imported = 0
         duplicates = 0
+        id_map: dict[str, str] = {}
         for msg in messages:
             text_hash = message_natural_key_hash(msg.text, msg.sender, msg.timestamp)
             stable_id = content_message_id(
                 platform, conversation_id, msg.text, msg.sender, msg.timestamp
             )
+            id_map[msg.id] = stable_id
             cursor = self._conn.execute(
                 """
                 INSERT INTO messages
@@ -168,6 +175,12 @@ class Store:
                 duplicates += 1
             else:
                 imported += 1
+        # remap reply_to from parser ids to stable content ids
+        for source_id, stable_id in id_map.items():
+            self._conn.execute(
+                "UPDATE messages SET reply_to = ? WHERE reply_to = ?",
+                (stable_id, source_id),
+            )
         self._conn.commit()
         return imported, duplicates
 
