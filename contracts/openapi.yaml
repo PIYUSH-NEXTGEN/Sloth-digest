@@ -1,0 +1,345 @@
+# SlothDigest REST API — OpenAPI 3.0
+# Agent A owns this file (see AGENTS.md 5). Canonical data schemas also live in
+# digest.schema.json; the component schemas here must stay in sync with it.
+# Version 0.1.0 — Phase 0 contract for frontend development against mocks.
+openapi: 3.0.3
+info:
+  title: SlothDigest API
+  description: |
+    Local-first digest API for group chats. Every endpoint runs on the user's own
+    machine; the only network call chat content makes is to localhost (Ollama).
+    Responses validate against contracts/digest.schema.json.
+  version: 0.1.0
+servers:
+  - url: http://localhost:8000
+tags:
+  - name: system
+  - name: ingest
+  - name: sources
+  - name: digest
+  - name: ask
+  - name: settings
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Liveness and basic configuration info
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version, model]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  version:
+                    type: string
+                    example: "0.1.0"
+                  model:
+                    type: string
+                    description: Configured SLOTH_MODEL value.
+                    example: gemma3:4b
+  /ingest/file:
+    post:
+      tags: [ingest]
+      summary: Upload a chat export file and import its messages
+      operationId: ingestFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: WhatsApp .txt export, DiscordChatExporter JSON or Telegram Desktop JSON export.
+      responses:
+        "200":
+          description: File parsed and imported (may be partially duplicated; never an error).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IngestResult" }
+        "400":
+          description: Unparseable or unsupported file.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /sources:
+    get:
+      tags: [sources]
+      summary: List known conversations with message counts
+      operationId: listSources
+      responses:
+        "200":
+          description: All conversations the store knows about.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [conversations]
+                properties:
+                  conversations:
+                    type: array
+                    items: { $ref: "#/components/schemas/ConversationInfo" }
+  /digest/run:
+    post:
+      tags: [digest]
+      summary: Run the digest pipeline
+      description: Ingest window -> redact -> chunk -> extract (map) -> reduce -> score -> validate -> persist. Uses the configured model; tests may run with a FakeLLMClient.
+      operationId: runDigest
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                since:
+                  type: string
+                  format: date-time
+                  description: Only include messages after this time (UTC). Defaults to last 24h.
+                conversation_ids:
+                  type: array
+                  items: { type: string }
+                  description: Restrict to these conversations. Default all.
+      responses:
+        "202":
+          description: Digest run started.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DigestRunResult" }
+        "400":
+          description: Invalid request (bad timestamps).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /digest/latest:
+    get:
+      tags: [digest]
+      summary: Most recent digest, if any
+      operationId: getLatestDigest
+      responses:
+        "200":
+          description: Latest digest.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Digest" }
+        "404":
+          description: No digest generated yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /digest/{digest_id}:
+    get:
+      tags: [digest]
+      summary: Fetch a specific digest by ID
+      operationId: getDigest
+      parameters:
+        - name: digest_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The digest.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Digest" }
+        "404":
+          description: Unknown digest ID.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /ask:
+    post:
+      tags: [ask]
+      summary: Ask a question over stored chats (Phase 5)
+      description: Local embeddings + FTS5 hybrid retrieval; answer cites message IDs. Implemented in Phase 5; returns 501 until then.
+      operationId: ask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Answer with supporting message IDs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Answer" }
+        "501":
+          description: Ask not implemented yet (Phase 4 and earlier).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /settings:
+    get:
+      tags: [settings]
+      summary: Read user settings
+      operationId: getSettings
+      responses:
+        "200":
+          description: Current settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+    put:
+      tags: [settings]
+      summary: Update user settings
+      description: Partial update; omitted fields keep their current value.
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Settings" }
+      responses:
+        "200":
+          description: Updated settings echoed back.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+components:
+  schemas:
+    Digest:
+      type: object
+      description: See contracts/digest.schema.json for the canonical definition.
+      required: [id, generated_at, window, model, prompt_version, groups]
+      properties:
+        id: { type: string }
+        generated_at: { type: string, format: date-time }
+        window:
+          type: object
+          required: [start, end]
+          properties:
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+        model: { type: string }
+        prompt_version: { type: string }
+        groups:
+          type: array
+          items:
+            type: object
+            required: [conversation_id, platform, name, message_count, skipped_count, tldr, needs_you, decisions, by_person, deadlines]
+            properties:
+              conversation_id: { type: string }
+              platform: { $ref: "#/components/schemas/Platform" }
+              name: { type: string }
+              message_count: { type: integer }
+              skipped_count: { type: integer }
+              tldr: { type: string }
+              needs_you:
+                type: array
+                items:
+                  type: object
+                  required: [message_id, from, summary, reason]
+                  properties:
+                    message_id: { type: string }
+                    from: { type: string }
+                    summary: { type: string }
+                    reason: { type: string }
+                    suggested_reply:
+                      type: string
+                      description: Draft only; never sent automatically.
+              decisions:
+                type: array
+                items:
+                  type: object
+                  required: [text, message_ids]
+                  properties:
+                    text: { type: string }
+                    message_ids: { type: array, items: { type: string } }
+              by_person:
+                type: array
+                items:
+                  type: object
+                  required: [name, points]
+                  properties:
+                    name: { type: string }
+                    points: { type: array, items: { type: string } }
+              deadlines:
+                type: array
+                items:
+                  type: object
+                  required: [text, message_ids]
+                  properties:
+                    text: { type: string }
+                    when: { type: string, nullable: true }
+                    message_ids: { type: array, items: { type: string } }
+    Platform:
+      type: string
+      enum: [whatsapp, discord, telegram]
+    ConversationInfo:
+      type: object
+      required: [id, platform, name, message_count, last_message_at]
+      properties:
+        id: { type: string }
+        platform: { $ref: "#/components/schemas/Platform" }
+        name: { type: string }
+        message_count: { type: integer }
+        last_message_at: { type: string, format: date-time, nullable: true }
+    IngestResult:
+      type: object
+      required: [conversation_id, imported, duplicates]
+      properties:
+        conversation_id: { type: string }
+        imported: { type: integer, description: Newly stored messages. }
+        duplicates:
+          type: integer
+          description: Messages already in the store (dedupe by platform+conversation+timestamp+sender+text-hash).
+    DigestRunResult:
+      type: object
+      description: In the MVP the run is synchronous; digest_id is returned directly with a 202 status.
+      required: [digest_id]
+      properties:
+        digest_id: { type: string }
+    Answer:
+      type: object
+      required: [answer, sources]
+      properties:
+        answer: { type: string }
+        sources:
+          type: array
+          items: { type: string }
+          description: Supporting message_ids.
+    Settings:
+      type: object
+      required: [user_names, vip_people, keywords, digest_time, model]
+      properties:
+        user_names:
+          type: array
+          items: { type: string }
+          description: User's own display names and aliases; drives 'needs you'.
+          example: ["Your Name", "nickname"]
+        vip_people:
+          type: array
+          items: { type: string }
+        keywords:
+          type: array
+          items: { type: string }
+          description: Extra importance keywords beyond the defaults (urgent, deadline, ...).
+        digest_time:
+          type: string
+          description: Daily schedule, local time HH:MM.
+          example: "06:00"
+        model:
+          type: string
+          description: Ollama model tag (SLOTH_MODEL).
+          example: gemma3:4b
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string }

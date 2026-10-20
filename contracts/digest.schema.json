@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slothdigest.local/digest.schema.json",
+  "title": "SlothDigest",
+  "description": "Canonical schema for SlothDigest data: messages, conversations and digests. Bump 'version' on any breaking change and log it in COORDINATION.md.",
+  "version": "0.1.0",
+  "$defs": {
+    "Platform": {
+      "type": "string",
+      "enum": ["whatsapp", "discord", "telegram"],
+      "description": "Chat platform a message or conversation came from. Official export/API ingestion only."
+    },
+    "Message": {
+      "type": "object",
+      "title": "Message",
+      "description": "A single parsed chat message. 'id' is the SlothDigest-assigned ID used for attribution (AGENTS.md 7.4).",
+      "required": ["id", "platform", "conversation_id", "sender", "timestamp", "text", "is_system"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "description": "Stable ID (e.g. 'wa:conv1:000123') used by the LLM to reference this message."},
+        "platform": {"$ref": "#/$defs/Platform"},
+        "conversation_id": {"type": "string"},
+        "sender": {"type": "string", "description": "Display name or phone placeholder as parsed from the export; never decided by the LLM."},
+        "timestamp": {"type": "string", "format": "date-time", "description": "UTC ISO-8601 timestamp converted from the export's local time."},
+        "text": {"type": "string", "description": "Message body. Media placeholders like '<Media omitted>' are kept as-is."},
+        "reply_to": {"type": ["string", "null"], "description": "ID of the message this one replies to, if known."},
+        "is_system": {"type": "boolean", "description": "True for system lines (encryption notices, join/leave, security changes)."}
+      }
+    },
+    "Conversation": {
+      "type": "object",
+      "title": "Conversation",
+      "required": ["id", "platform", "name", "participants"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "platform": {"$ref": "#/$defs/Platform"},
+        "name": {"type": "string"},
+        "participants": {"type": "array", "items": {"type": "string"}, "description": "Observed senders. Ground truth for the attribution rule (7.4)."}
+      }
+    },
+    "Window": {
+      "type": "object",
+      "title": "DigestWindow",
+      "description": "Time window the digest covers (UTC).",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end": {"type": "string", "format": "date-time"}
+      }
+    },
+    "NeedsYouItem": {
+      "type": "object",
+      "title": "NeedsYouItem",
+      "description": "Something that needs the user's attention, ranked by score.py. 'from' is rebuilt from stored messages by validate.py; the LLM never decides it.",
+      "required": ["message_id", "from", "summary", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {"type": "string", "description": "Must point to an existing Message id, else the item is dropped by validate.py."},
+        "from": {"type": "string", "description": "Sender, overwritten from the source message by validate.py."},
+        "summary": {"type": "string", "maxLength": 240},
+        "reason": {"type": "string", "description": "Why this needs the user: direct question, mention, deadline, VIP sender, etc.", "maxLength": 240},
+        "suggested_reply": {"type": "string", "description": "Draft reply suggestion. Draft only; SlothDigest never sends anything."}
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "title": "Decision",
+      "required": ["text", "message_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "text": {"type": "string", "maxLength": 400},
+        "message_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "IDs of supporting messages. Non-existent IDs cause the item to be dropped by validate.py."}
+      }
+    },
+    "PersonPoints": {
+      "type": "object",
+      "title": "PersonPoints",
+      "description": "What one participant said or did in the window. 'name' must be a participant of the conversation.",
+      "required": ["name", "points"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "points": {"type": "array", "items": {"type": "string", "maxLength": 240}, "minItems": 1}
+      }
+    },
+    "Deadline": {
+      "type": "object",
+      "title": "Deadline",
+      "required": ["text", "message_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "text": {"type": "string", "maxLength": 240},
+        "when": {"type": ["string", "null"], "description": "Best-effort normalized date/time (ISO-8601 full or partial, e.g. '2026-03-14' or '18:30')."},
+        "message_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "GroupDigest": {
+      "type": "object",
+      "title": "GroupDigest",
+      "description": "Digest of one group conversation over the window.",
+      "required": ["conversation_id", "platform", "name", "message_count", "skipped_count", "tldr", "needs_you", "decisions", "by_person", "deadlines"],
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {"type": "string"},
+        "platform": {"$ref": "#/$defs/Platform"},
+        "name": {"type": "string"},
+        "message_count": {"type": "integer", "minimum": 0, "description": "Non-system messages considered in the window."},
+        "skipped_count": {"type": "integer", "minimum": 0, "description": "Messages judged banter/noise and not surfaced; shown in UI as 'Skipped (N messages)'."},
+        "tldr": {"type": "string", "maxLength": 400, "description": "At most 2 sentences."},
+        "needs_you": {"type": "array", "items": {"$ref": "#/$defs/NeedsYouItem"}},
+        "decisions": {"type": "array", "items": {"$ref": "#/$defs/Decision"}},
+        "by_person": {"type": "array", "items": {"$ref": "#/$defs/PersonPoints"}},
+        "deadlines": {"type": "array", "items": {"$ref": "#/$defs/Deadline"}}
+      }
+    },
+    "Digest": {
+      "type": "object",
+      "title": "Digest",
+      "required": ["id", "generated_at", "window", "model", "prompt_version", "groups"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "description": "e.g. '2026-03-14-1830-abcdef'"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "window": {"$ref": "#/$defs/Window"},
+        "model": {"type": "string", "description": "Model used, from SLOTH_MODEL config (e.g. 'gemma3:4b', or 'fake' in tests)."},
+        "prompt_version": {"type": "string", "description": "Version string of the prompt files in backend/app/llm/prompts/."},
+        "groups": {"type": "array", "items": {"$ref": "#/$defs/GroupDigest"}}
+      }
+    }
+  },
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/Digest"},
+    {"$ref": "#/$defs/Conversation"},
+    {"$ref": "#/$defs/Message"}
+  ]
+}
