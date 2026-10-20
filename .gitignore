@@ -1,0 +1,31 @@
+# --- Python (backend / scripts / eval) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# --- Env & local-only data (never commit) ---
+.env
+.env.*
+!.env.example
+data/
+digests/
+*.db
+*.sqlite3
+
+# --- OS / editor / logs ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
