@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "../App";
 
 describe("App", () => {
-  it("renders the header, navigation and the digest page", () => {
+  it("renders the header, navigation and the digest page", async () => {
     render(<App />);
 
     expect(
@@ -13,17 +13,21 @@ describe("App", () => {
       screen.getByText("Sleep through the chat. Wake up caught up."),
     ).toBeInTheDocument();
     expect(screen.getByRole("navigation")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /morning digest/i }),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /morning digest/i }),
+      ).toBeInTheDocument(),
+    );
   });
 
-  it("renders one digest card per group with long/emoji names", () => {
+  it("renders one digest card per group with long/emoji names", async () => {
     render(<App />);
 
-    expect(
-      screen.getByRole("article", { name: /weekend trip/i }),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("article", { name: /weekend trip/i }),
+      ).toBeInTheDocument(),
+    );
     expect(
       screen.getByRole("article", { name: /sunday-cricket-squad/i }),
     ).toBeInTheDocument();

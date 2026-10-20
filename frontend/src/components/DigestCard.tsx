@@ -1,11 +1,11 @@
 import { useState } from "react";
-import type { DigestGroup } from "../types";
+import type { GroupDigest } from "../types";
 import { PLATFORM_LABELS } from "../types";
 import NeedsYouList from "./NeedsYouList";
 import PersonSummary from "./PersonSummary";
 
 interface DigestCardProps {
-  group: DigestGroup;
+  group: GroupDigest;
 }
 
 export default function DigestCard({ group }: DigestCardProps) {
