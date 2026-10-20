@@ -36,4 +36,4 @@ Phase 0 complete (all A0.x and B0.x done) → starting Phase 1
 - 2026-10-20 (B): Retiring `contribution.md`: synced A's copy with the current board, asked A (there and in canonical) to stop writing to it; I will delete it once A confirms. Until then both stay synced.
 
 ## Blockers
-- (none)
+- (human): no git remote configured yet (`git pull` finds no refs/heads/main) — `.github/workflows/ci.yml` is committed but CI cannot go green until the repo is pushed. Everything else is locally green (backend pytest/mypy/ruff, frontend vitest/eslint/build, synthetic data, contracts). Phase 0 exit criterion "CI runs green" is the only one pending this.
