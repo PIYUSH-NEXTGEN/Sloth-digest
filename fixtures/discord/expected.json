@@ -1,0 +1,60 @@
+{
+  "platform": "discord",
+  "conversation_name": "sunday-cricket-squad",
+  "participants": [
+    "Sam",
+    "Riya",
+    "Ishita",
+    "Kabir",
+    "Nikhil",
+    "Priya"
+  ],
+  "start": "2026-10-19T20:03:16",
+  "end": "2026-10-20T05:59:25",
+  "message_count": 246,
+  "planted_facts": [
+    {
+      "kind": "decision",
+      "text": "let's meet Saturday 6pm",
+      "sender": "Riya",
+      "at": "2026-10-19T22:16:26",
+      "message_id": "m-340519a7f9"
+    },
+    {
+      "kind": "correction",
+      "text": "meeting is at Saturday 7pm",
+      "sender": "Nikhil",
+      "at": "2026-10-19T22:18:12",
+      "message_id": "m-890346b150"
+    },
+    {
+      "kind": "question_for_user",
+      "text": "@Priya can you drive on Saturday or take the bus?",
+      "sender": "Ishita",
+      "at": "2026-10-20T02:37:23",
+      "message_id": "m-be50560666"
+    },
+    {
+      "kind": "deadline",
+      "text": "upload the report by Wednesday night",
+      "sender": "Nikhil",
+      "at": "2026-10-20T05:44:58",
+      "message_id": "m-c7e85c1e18"
+    },
+    {
+      "kind": "mention_user",
+      "text": "pris you owe the group zoodles",
+      "sender": "Nikhil",
+      "at": "2026-10-19T21:08:20",
+      "message_id": "m-54da20cd09"
+    },
+    {
+      "kind": "banter",
+      "text": "🚀🚀🚀",
+      "sender": "Sam",
+      "at": "2026-10-20T05:03:27",
+      "message_id": "m-92397175b8"
+    }
+  ],
+  "skipped_lower_bound": 241
+}

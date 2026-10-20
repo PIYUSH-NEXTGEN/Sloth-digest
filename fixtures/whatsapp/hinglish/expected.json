@@ -1,0 +1,58 @@
+{
+  "platform": "whatsapp",
+  "conversation_name": "sloth test group",
+  "participants": [
+    "Aman",
+    "Riya",
+    "Kabir",
+    "Priya"
+  ],
+  "start": "2026-10-19T20:00:35",
+  "end": "2026-10-20T05:59:13",
+  "message_count": 286,
+  "planted_facts": [
+    {
+      "kind": "decision",
+      "text": "let's meet Saturday 6pm",
+      "sender": "Riya",
+      "at": "2026-10-19T22:53:05",
+      "message_id": "m-340519a7f9"
+    },
+    {
+      "kind": "correction",
+      "text": "meeting is at Saturday 7pm",
+      "sender": "Aman",
+      "at": "2026-10-20T04:11:32",
+      "message_id": "m-503b988cb5"
+    },
+    {
+      "kind": "question_for_user",
+      "text": "@Priya can you drive on Saturday or take the bus?",
+      "sender": "Riya",
+      "at": "2026-10-20T05:44:11",
+      "message_id": "m-136b0e8ae3"
+    },
+    {
+      "kind": "deadline",
+      "text": "send booking amount by Friday",
+      "sender": "Riya",
+      "at": "2026-10-20T02:57:43",
+      "message_id": "m-c61b5b0699"
+    },
+    {
+      "kind": "mention_user",
+      "text": "prids you owe the group zoodles",
+      "sender": "Kabir",
+      "at": "2026-10-20T00:08:13",
+      "message_id": "m-e5d8a3a964"
+    },
+    {
+      "kind": "banter",
+      "text": "😂😂",
+      "sender": "Aman",
+      "at": "2026-10-19T20:24:24",
+      "message_id": "m-5982852f7f"
+    }
+  ],
+  "skipped_lower_bound": 1
+}

@@ -1,0 +1,59 @@
+{
+  "platform": "whatsapp",
+  "conversation_name": "sloth test group",
+  "participants": [
+    "Nikhil",
+    "Ishita",
+    "Sam",
+    "Riya",
+    "Priya"
+  ],
+  "start": "2026-10-19T20:00:26",
+  "end": "2026-10-20T05:58:51",
+  "message_count": 506,
+  "planted_facts": [
+    {
+      "kind": "decision",
+      "text": "let's meet Saturday 6pm",
+      "sender": "Riya",
+      "at": "2026-10-20T05:04:28",
+      "message_id": "m-340519a7f9"
+    },
+    {
+      "kind": "correction",
+      "text": "meeting is at Saturday 7pm",
+      "sender": "Ishita",
+      "at": "2026-10-19T22:37:49",
+      "message_id": "m-bdc34ec453"
+    },
+    {
+      "kind": "question_for_user",
+      "text": "@Priya can you drive on Saturday or take the bus?",
+      "sender": "Riya",
+      "at": "2026-10-20T00:15:07",
+      "message_id": "m-136b0e8ae3"
+    },
+    {
+      "kind": "deadline",
+      "text": "send booking amount by Friday",
+      "sender": "Ishita",
+      "at": "2026-10-19T20:19:45",
+      "message_id": "m-067de9ca83"
+    },
+    {
+      "kind": "mention_user",
+      "text": "prids you owe the group zoodles",
+      "sender": "Sam",
+      "at": "2026-10-20T02:06:28",
+      "message_id": "m-29415370be"
+    },
+    {
+      "kind": "banter",
+      "text": "😂😂",
+      "sender": "Sam",
+      "at": "2026-10-20T04:34:09",
+      "message_id": "m-f7c4e17c7c"
+    }
+  ],
+  "skipped_lower_bound": 1
+}
