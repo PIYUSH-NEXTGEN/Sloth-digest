@@ -29,3 +29,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+
+# --- Agent working files (local only; not part of the shipped project) ---
+agent.md
+COORDINATION.md
+*.swp
+*~
+
