@@ -46,6 +46,57 @@ body {
   text-decoration-color: var(--accent);
 }
 
+.app-header nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.15rem 0.25rem;
+}
+
+.app-header nav button.active,
+.app-header nav button:hover {
+  color: var(--accent);
+}
+
+.upload-box {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.upload-box.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.upload-box input {
+  color: var(--text);
+}
+
+.import-result {
+  color: var(--accent);
+}
+
+.conversation-list {
+  list-style: none;
+  padding: 0;
+}
+
+.conversation-list li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.75rem;
+}
+
+.conversation-list .conv-name {
+  color: var(--text);
+}
+
 .digest-card {
   background: var(--card);
   border: 1px solid var(--border);

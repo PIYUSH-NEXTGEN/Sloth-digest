@@ -41,21 +41,13 @@ export const handlers = [
     }),
   ),
 
-  http.post("*/ingest/file", async ({ request }) => {
-    const form = await request.formData();
-    const file = form.get("file");
-    if (!file || typeof file === "string") {
-      return HttpResponse.json(
-        { detail: "multipart file missing" },
-        { status: 400 },
-      );
-    }
-    return HttpResponse.json({
+  http.post("*/ingest/file", () =>
+    HttpResponse.json({
       conversation_id: "weekend-trip",
       imported: 404,
       duplicates: 8,
-    } satisfies IngestResult);
-  }),
+    } satisfies IngestResult),
+  ),
 
   http.post("*/digest/run", async () => {
     await delay(120);

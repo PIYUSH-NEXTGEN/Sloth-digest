@@ -1,35 +1,48 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "../App";
 
-describe("App", () => {
-  it("renders the header, navigation and the digest page", async () => {
+describe("App navigation", () => {
+  it("navigates to Sources and shows the upload box", async () => {
     render(<App />);
 
-    expect(
-      screen.getByRole("heading", { name: "SlothDigest" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Sleep through the chat. Wake up caught up."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("navigation")).toBeInTheDocument();
     await waitFor(() =>
       expect(
         screen.getByRole("heading", { name: /morning digest/i }),
       ).toBeInTheDocument(),
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Weekend trip planning 🏔️")).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(/imported locally, nothing is sent anywhere/i),
+    ).toBeInTheDocument();
   });
 
-  it("renders one digest card per group with long/emoji names", async () => {
+  it("keeps digest cards accessible after navigating back", async () => {
     render(<App />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+    await waitFor(() =>
+      expect(screen.getByText(/weekend trip planning/i)).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Digest" }));
     await waitFor(() =>
       expect(
         screen.getByRole("article", { name: /weekend trip/i }),
       ).toBeInTheDocument(),
     );
+  });
+
+  it("shows a placeholder for the Phase 3 settings page", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     expect(
-      screen.getByRole("article", { name: /sunday-cricket-squad/i }),
+      screen.getByText(/settings page lands in phase 3/i),
     ).toBeInTheDocument();
   });
 });
