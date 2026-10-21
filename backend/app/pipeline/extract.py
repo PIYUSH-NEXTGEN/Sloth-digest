@@ -102,7 +102,7 @@ async def extract_chunk(
     *,
     version: str = PROMPT_VERSION,
     temperature: float = 0.0,
-    max_tokens: int = 2400,
+    max_tokens: int = 3200,
 ) -> ChunkExtract:
     """Run one map step. Raises ValueError on unusable output (retry upstream)."""
     prompt = build_extract_prompt(chunk, version)

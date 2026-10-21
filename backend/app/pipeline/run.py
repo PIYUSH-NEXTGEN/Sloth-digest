@@ -25,12 +25,15 @@ from app.store.db import Store
 logger = logging.getLogger(__name__)
 
 _EXTRACT_ATTEMPTS = 2
+_EXTRACT_TEMP_STEP = 0.25  # retry samplers differ; temp-0 failures are deterministic
 _DEFAULT_HOURS = 24
 
 
-def _make_attempt(client: LLMClient, chunk: Chunk) -> Callable[[], Awaitable[ChunkExtract]]:
+def _make_attempt(
+    client: LLMClient, chunk: Chunk, temperature: float = 0.0
+) -> Callable[[], Awaitable[ChunkExtract]]:
     async def attempt() -> ChunkExtract:
-        return await extract_chunk(client, chunk)
+        return await extract_chunk(client, chunk, temperature=temperature)
 
     return attempt
 
@@ -40,16 +43,30 @@ async def _extracts_for_chunks(client: LLMClient, chunks: list[Chunk]) -> list[C
     extracts: list[ChunkExtract] = []
     for chunk in chunks:
         try:
-            result: ChunkExtract = await run_with_retry(
-                _make_attempt(client, chunk),
-                attempts=_EXTRACT_ATTEMPTS,
-                retry_on=(ValueError,),
-            )
+            result: ChunkExtract = await _extract_one(client, chunk)
         except ValueError as exc:
             logger.warning("extract failed for chunk %s; skipping: %s", chunk, exc)
             continue
         extracts.append(result)
     return extracts
+
+
+async def _extract_one(client: LLMClient, chunk: Chunk) -> ChunkExtract:
+    # attempt n resamples at a rising temperature; temp-0 output is fixed,
+    # so a deterministic JSON glitch would otherwise always repeat
+    last_error: ValueError | None = None
+    for attempt_index in range(_EXTRACT_ATTEMPTS):
+        temperature = min(0.4, attempt_index * _EXTRACT_TEMP_STEP)
+        try:
+            return await run_with_retry(
+                _make_attempt(client, chunk, temperature),
+                attempts=1,
+                retry_on=(ValueError,),
+            )
+        except ValueError as exc:
+            last_error = exc
+    assert last_error is not None
+    raise last_error
 
 
 async def run_digest(
