@@ -60,3 +60,23 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  eval:
+    name: eval smoke (FakeLLM harness over fixtures)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: uv sync --frozen --project backend
+
+      - name: Eval run (deterministic, offline)
+        run: uv run --project backend python eval/run_eval.py --fake
+
+      - name: Report schema-valid count
+        run: head -20 eval/report.md

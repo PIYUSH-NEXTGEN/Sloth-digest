@@ -69,7 +69,22 @@ landed; settings UI and demo/docs polish are in flight.
 - [AGENTS.md](agent.md) — how the two-agent repo is organized
 - [COORDINATION.md](COORDINATION.md) — live task board
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help (even "good first issues")
+- [docs/privacy.md](docs/privacy.md) — the privacy statement
+- [docs/architecture.md](docs/architecture.md) — the pipeline, layer by layer
 - [LICENSE](LICENSE) — MIT
+
+## Demo (90 seconds, offline)
+
+```bash
+bash scripts/demo.sh
+```
+
+Generates a fresh 500-message synthetic chat with planted facts, runs the
+full pipeline (ingest through the real HTTP API, scripted model), and prints
+the ~10-line digest — TL;DR, Needs you, Decisions, By person, skipped-banter
+count — writing `data/demo/digest.md`. Deterministic and fully offline; the
+recorded demo flow runs this with Wi-Fi off on camera. For the UI version,
+point the Vite dev server at the backend and upload `data/demo/chat.txt`.
 
 ## Evaluation
 
