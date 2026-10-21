@@ -8,10 +8,12 @@ from fastapi import FastAPI
 from app.api.digest import router as digest_router
 from app.api.health import router as health_router
 from app.api.ingest import router as ingest_router
+from app.api.settings import router as settings_router
 from app.config import APP_VERSION, Settings, get_settings
 from app.ingest.watcher import DropFolderWatcher
 from app.llm.client import LLMClient, OllamaClient
 from app.store.db import Store
+from app.store.user_settings import UserSettings
 
 
 def create_watcher(settings: Settings, store: Store) -> DropFolderWatcher:
@@ -32,8 +34,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         store.close()
 
 
-def create_app(store: Store | None = None, llm: LLMClient | None = None) -> FastAPI:
-    settings = get_settings()
+def create_app(
+    store: Store | None = None,
+    llm: LLMClient | None = None,
+    settings: Settings | None = None,
+) -> FastAPI:
+    settings = settings if settings is not None else get_settings()
     instance = store if store is not None else Store(settings.db_path)
     app = FastAPI(
         title="SlothDigest API",
@@ -44,9 +50,11 @@ def create_app(store: Store | None = None, llm: LLMClient | None = None) -> Fast
     app.state.settings = settings
     app.state.store = instance
     app.state.llm = llm if llm is not None else OllamaClient(settings.ollama_url, settings.model)
+    app.state.user_settings = UserSettings(settings)
     app.include_router(health_router)
     app.include_router(ingest_router)
     app.include_router(digest_router)
+    app.include_router(settings_router)
     return app
 
 

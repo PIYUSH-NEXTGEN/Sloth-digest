@@ -11,12 +11,12 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.api.dto import DigestRunRequest, DigestRunResult
 from app.api.ingest import store_from
-from app.config import Settings
 from app.llm.client import LLMClient
 from app.models import Digest
 from app.pipeline.run import run_digest
 from app.pipeline.score import ScoringConfig
 from app.store.db import Store
+from app.store.user_settings import UserSettings
 
 router = APIRouter()
 
@@ -34,20 +34,21 @@ async def run_digest_endpoint(
 ) -> DigestRunResult:
     store = store_from(request)
     llm = llm_from(request)
-    settings: Settings = request.app.state.settings
+    user_settings: UserSettings = request.app.state.user_settings
+    view = user_settings.view()
     payload = body or DigestRunRequest()
     try:
         digest = await run_digest(
             store,
             llm,
             ScoringConfig(
-                user_names=settings.user_names,
-                vip_people=settings.vip_people,
-                keywords=settings.keywords,
+                user_names=list(view["user_names"]),
+                vip_people=list(view["vip_people"]),
+                keywords=list(view["keywords"]),
             ),
             since=payload.since,
             conversation_ids=payload.conversation_ids,
-            model_name=settings.model,
+            model_name=str(view["model"]),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
