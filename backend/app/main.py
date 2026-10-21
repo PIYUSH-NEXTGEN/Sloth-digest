@@ -12,6 +12,7 @@ from app.api.settings import router as settings_router
 from app.config import APP_VERSION, Settings, get_settings
 from app.ingest.watcher import DropFolderWatcher
 from app.llm.client import LLMClient, OllamaClient
+from app.observability.sentry import init_sentry
 from app.scheduler import DigestScheduler
 from app.store.db import Store
 from app.store.user_settings import UserSettings
@@ -44,6 +45,7 @@ def create_app(
     settings: Settings | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else get_settings()
+    init_sentry(settings)  # no-op unless SLOTH_SENTRY_DSN is set (A4.1)
     instance = store if store is not None else Store(settings.db_path)
     app = FastAPI(
         title="SlothDigest API",
