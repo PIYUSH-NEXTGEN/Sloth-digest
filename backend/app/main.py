@@ -60,7 +60,9 @@ def create_app(
     app.state.user_settings = user_settings
     watcher = create_watcher(settings, instance)
     app.state.watcher = watcher
-    app.state.digest_scheduler = DigestScheduler(instance, app.state.llm, user_settings, watcher)
+    app.state.digest_scheduler = DigestScheduler(
+        instance, app.state.llm, user_settings, watcher, env_settings=settings
+    )
     app.include_router(health_router)
     app.include_router(ingest_router)
     app.include_router(digest_router)

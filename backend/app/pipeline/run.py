@@ -8,6 +8,7 @@ the digest_id immediately (contract: DigestRunResult, 202).
 
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 
 from app.llm.client import LLMClient
@@ -16,6 +17,7 @@ from app.models import Digest, GroupDigest, Message, Window
 from app.pipeline.chunk import Chunk, chunk_messages
 from app.pipeline.extract import ChunkExtract, extract_chunk
 from app.pipeline.reduce import ReduceResult, build_group_digest, heuristic_reduce, reduce_extract
+from app.pipeline.retry import run_with_retry
 from app.pipeline.score import ScoringConfig
 from app.pipeline.validate import validate_group_digest
 from app.store.db import Store
@@ -26,19 +28,27 @@ _EXTRACT_ATTEMPTS = 2
 _DEFAULT_HOURS = 24
 
 
+def _make_attempt(client: LLMClient, chunk: Chunk) -> Callable[[], Awaitable[ChunkExtract]]:
+    async def attempt() -> ChunkExtract:
+        return await extract_chunk(client, chunk)
+
+    return attempt
+
+
 async def _extracts_for_chunks(client: LLMClient, chunks: list[Chunk]) -> list[ChunkExtract]:
-    """Map step with per-chunk retry; a chunk failing twice is skipped."""
+    """Map step with per-chunk retry; a chunk failing every attempt is skipped."""
     extracts: list[ChunkExtract] = []
     for chunk in chunks:
-        result: ChunkExtract | None = None
-        for attempt in range(_EXTRACT_ATTEMPTS):
-            try:
-                result = await extract_chunk(client, chunk)
-                break
-            except ValueError as exc:
-                logger.warning("extract attempt %d failed: %s", attempt + 1, exc)
-        if result is not None:
-            extracts.append(result)
+        try:
+            result: ChunkExtract = await run_with_retry(
+                _make_attempt(client, chunk),
+                attempts=_EXTRACT_ATTEMPTS,
+                retry_on=(ValueError,),
+            )
+        except ValueError as exc:
+            logger.warning("extract failed for chunk %s; skipping: %s", chunk, exc)
+            continue
+        extracts.append(result)
     return extracts
 
 

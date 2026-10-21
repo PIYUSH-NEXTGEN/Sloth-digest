@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     )
     sentry_dsn: str = Field(default="", description="Empty = Sentry disabled.")
     elevenlabs_api_key: str = Field(default="", description="Empty = voice disabled.")
+    elevenlabs_voice_id: str = Field(
+        default="", description="ElevenLabs voice; empty = bundled default."
+    )
     temporal_enabled: bool = Field(default=False)
     desktop_notify: bool = Field(
         default=False, description="Opt-in OS toast after the scheduled digest."

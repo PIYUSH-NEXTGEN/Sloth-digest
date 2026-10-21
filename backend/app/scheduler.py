@@ -7,14 +7,19 @@ user changes digest_time in PUT /settings.
 """
 
 import logging
+from datetime import UTC, datetime
+from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from app.config import Settings
+from app.delivery.narration import narrate_digest
 from app.delivery.notify import send_desktop_notification
 from app.delivery.render import write_digest_files
 from app.ingest.watcher import DropFolderWatcher
 from app.llm.client import LLMClient
+from app.models import Digest
 from app.pipeline.run import run_digest
 from app.pipeline.score import ScoringConfig
 from app.store.db import Store
@@ -45,12 +50,14 @@ class DigestScheduler:
         watcher: DropFolderWatcher,
         *,
         digests_dir: str = "digests",
+        env_settings: Settings | None = None,
     ) -> None:
         self._store = store
         self._client = client
         self._user_settings = user_settings
         self._watcher = watcher
         self._digests_dir = digests_dir
+        self._env_settings = env_settings
         hour, minute = parse_digest_time(user_settings.view()["digest_time"])
         self._scheduler = AsyncIOScheduler()
         self._hour = hour
@@ -100,8 +107,21 @@ class DigestScheduler:
             return None
         md_path, html_path = write_digest_files(digest, self._digests_dir)
         logger.info("scheduled digest written: %s / %s", md_path, html_path)
+        if self._env_settings is not None and self._env_settings.voice_enabled:
+            await self._narrate(digest)
         if bool(view.get("desktop_notify", False)):
             first = digest.groups[0] if digest.groups else None
             summary = first.tldr[:120] if first else "your daily digest is ready"
             send_desktop_notification("SlothDigest", summary)
         return digest.id
+
+    async def _narrate(self, digest: Digest) -> None:
+        """A4.3: optional ElevenLabs mp3 next to the digest files."""
+        if self._env_settings is None or not self._env_settings.voice_enabled:
+            return
+        audio = await narrate_digest(digest, self._env_settings)
+        if audio:
+            date = datetime.now(UTC).date().isoformat()
+            out = Path(self._digests_dir) / f"{date}.mp3"
+            out.write_bytes(audio)
+            logger.info("narration written: %s", out)
