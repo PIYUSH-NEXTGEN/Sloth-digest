@@ -3,7 +3,7 @@
 The SQLite store lives on ``app.state.store`` (created in app.main.create_app).
 """
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 from app.api.dto import ConversationInfo, IngestResult, SourcesResponse
 from app.ingest.service import decode_export, ingest_export
@@ -12,6 +12,7 @@ from app.store.db import Store
 router = APIRouter()
 
 _FILE = File(...)  # B008-safe module-level default
+_FORM_NONE = Form(default=None)  # B008-safe module-level default
 
 
 def store_from(request: Request) -> Store:
@@ -25,7 +26,7 @@ def store_from(request: Request) -> Store:
 async def ingest_file(
     request: Request,
     file: UploadFile = _FILE,
-    conversation_name: str | None = None,
+    conversation_name: str | None = _FORM_NONE,
 ) -> IngestResult:
     store = store_from(request)
     data = await file.read()
