@@ -12,7 +12,7 @@ from typing import Any
 
 from app.config import Settings
 
-FIELDS = ("user_names", "vip_people", "keywords", "digest_time", "model")
+FIELDS = ("user_names", "vip_people", "keywords", "digest_time", "model", "desktop_notify")
 
 
 class UserSettings:

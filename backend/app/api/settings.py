@@ -46,5 +46,9 @@ async def get_settings_endpoint(request: Request) -> SettingsView:
 
 @router.put("/settings", response_model=SettingsView)
 async def update_settings(request: Request, body: SettingsUpdate) -> SettingsView:
-    view = user_settings_from(request).update(body.model_dump(mode="json", exclude_none=True))
+    patch = body.model_dump(mode="json", exclude_none=True)
+    view = user_settings_from(request).update(patch)
+    scheduler = getattr(request.app.state, "digest_scheduler", None)
+    if scheduler is not None and "digest_time" in patch:
+        scheduler.reschedule(str(view["digest_time"]))
     return SettingsView.model_validate(view)

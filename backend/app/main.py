@@ -12,6 +12,7 @@ from app.api.settings import router as settings_router
 from app.config import APP_VERSION, Settings, get_settings
 from app.ingest.watcher import DropFolderWatcher
 from app.llm.client import LLMClient, OllamaClient
+from app.scheduler import DigestScheduler
 from app.store.db import Store
 from app.store.user_settings import UserSettings
 
@@ -22,14 +23,17 @@ def create_watcher(settings: Settings, store: Store) -> DropFolderWatcher:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    settings: Settings = app.state.settings
     store: Store = app.state.store
-    watcher: DropFolderWatcher | None = None
-    watcher = create_watcher(settings, store)
+    watcher: DropFolderWatcher = app.state.watcher
     watcher.start()
+    scheduler: DigestScheduler | None = app.state.digest_scheduler
+    if scheduler is not None:
+        scheduler.start()
     try:
         yield
     finally:
+        if scheduler is not None:
+            scheduler.stop()
         await watcher.stop()
         store.close()
 
@@ -50,7 +54,11 @@ def create_app(
     app.state.settings = settings
     app.state.store = instance
     app.state.llm = llm if llm is not None else OllamaClient(settings.ollama_url, settings.model)
-    app.state.user_settings = UserSettings(settings)
+    user_settings = UserSettings(settings)
+    app.state.user_settings = user_settings
+    watcher = create_watcher(settings, instance)
+    app.state.watcher = watcher
+    app.state.digest_scheduler = DigestScheduler(instance, app.state.llm, user_settings, watcher)
     app.include_router(health_router)
     app.include_router(ingest_router)
     app.include_router(digest_router)
