@@ -38,11 +38,10 @@ describe("App navigation", () => {
     );
   });
 
-  it("shows a placeholder for the Phase 3 settings page", () => {
+  it("navigates to Settings and loads the current values", async () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    expect(
-      screen.getByText(/settings page lands in phase 3/i),
-    ).toBeInTheDocument();
+    const names = await screen.findByLabelText("Your names & aliases");
+    await waitFor(() => expect(names).toHaveValue("Priya, prids"));
   });
 });

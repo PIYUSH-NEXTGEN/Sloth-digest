@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import DigestPage from "./pages/Digest";
 import SourcesPage from "./pages/Sources";
+import SettingsPage from "./pages/Settings";
 
 export type Route = "digest" | "sources" | "settings";
 
@@ -65,9 +66,7 @@ export default function App() {
       <main>
         {route === "digest" ? <DigestPage /> : null}
         {route === "sources" ? <SourcesPage /> : null}
-        {route === "settings" ? (
-          <p className="empty-note">Settings page lands in Phase 3 (B3.1).</p>
-        ) : null}
+        {route === "settings" ? <SettingsPage /> : null}
       </main>
     </div>
   );

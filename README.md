@@ -32,8 +32,8 @@ _TODO: 10-second demo GIF (added in Phase 7 with the submission)._
 - Optional models/features are strictly opt-in and off by default.
 
 _Quickstart, export guides, digest example, architecture, privacy statement,
-configuration table, eval results, roadmap, limitations, and credits are
-being filled in as the MVP (Phases 0–3) lands._
+configuration table, and credits are being filled in as the MVP (Phases 0–3)
+lands._
 
 ## Quickstart (planned — first cut in Phase 3)
 
@@ -63,13 +63,34 @@ make dev
 
 ## Project status
 
-Phase 0 (foundations) — backend and frontend scaffolds are landing; the
-digest pipeline (Phase 2) is next.
+Phase 3 of the two-phase MVP — backend pipeline and frontend surface are
+landed; settings UI and demo/docs polish are in flight.
 
 - [AGENTS.md](agent.md) — how the two-agent repo is organized
 - [COORDINATION.md](COORDINATION.md) — live task board
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help (even "good first issues")
 - [LICENSE](LICENSE) — MIT
+
+## Evaluation
+
+The pipeline is measured against synthetic datasets only (seeded generator,
+planted facts, no real chats): 8 datasets across WhatsApp (Android/iOS,
+Hinglish, edge cases), Discord, and Telegram, 240–500 messages each. Each run
+ingests the export through the real HTTP API and scores the produced digest
+against the planted ground truth. See [eval/report.md](eval/report.md) and
+[eval/run_eval.py](eval/run_eval.py) for details.
+
+The table below is the `--fake` baseline: the LLM step is replaced by
+`ScriptedPipelineClient`, a deterministic stand-in that answers prompts with
+perfect-content JSON built from the ground truth — so these numbers measure
+the *workflow* (chunking, strict JSON validation, reduce merging, deterministic
+scoring, attribution), not a model. Real Ollama numbers land with `--live`.
+
+- **needs-you recall: 100%** (every planted question/mention surfaces)
+- **decision recall: 100%** (corrections supersede their original decision)
+- **attribution accuracy: 100%** — "who said what" is rebuilt from the parsed
+  message store, never from model output, so this is 100% by construction
+- schema validity: 8/8 digests (canonical JSON Schema)
 
 ## License
 

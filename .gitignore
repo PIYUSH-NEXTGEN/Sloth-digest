@@ -35,4 +35,7 @@ agent.md
 COORDINATION.md
 *.swp
 *~
+# Playwright artifacts
+frontend/test-results/
+frontend/playwright-report/
 
