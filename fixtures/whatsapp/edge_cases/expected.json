@@ -1,0 +1,11 @@
+{
+  "platform": "whatsapp",
+  "conversation_name": "trek squad (edge cases)",
+  "participants": ["Priya", "Riya", "Kabir", "Aman", "Nikhil", "🦥 Lazy Panda", "14127778901", "+1 412 777 8901"],
+  "start": "2026-10-19T20:00:00",
+  "end": "2026-10-20T06:00:00",
+  "message_count": 18,
+  "skipped_lower_bound": 0,
+  "planted_facts": [],
+  "notes": "Hand-crafted SYNTHETIC edge-case export mixing Android and iOS lines in one file: 24h and 12h times, PM/AM both with and without seconds, multiline continuations, system lines (banner, join invite, changed subject, missed voice call via named sender, you-left, security code changed), <Media omitted>, phone-number senders in two formats, emoji-with-space sender, @nickname mention, blank lines. Unambiguously DD/MM (days 19-21). All names/numbers invented."
+}

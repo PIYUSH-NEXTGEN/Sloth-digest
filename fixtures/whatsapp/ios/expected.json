@@ -1,0 +1,11 @@
+{
+  "platform": "whatsapp",
+  "conversation_name": "trek squad (ios)",
+  "participants": ["Priya", "Riya", "Kabir", "14127778901", "🦥 Lazy Panda"],
+  "start": "2026-10-19T20:00:00",
+  "end": "2026-10-20T05:45:00",
+  "message_count": 18,
+  "skipped_lower_bound": 0,
+  "planted_facts": [],
+  "notes": "Hand-crafted SYNTHETIC iOS-format export: 12h time, bracket timestamps, optional seconds, multiline message, system lines (encryption banner, created group, changed subject, security code changed, missed voice call as a named sender message), <Media omitted> and <Attached:> placeholders, phone-number sender, emoji-with-space sender. All names/numbers invented."
+}
