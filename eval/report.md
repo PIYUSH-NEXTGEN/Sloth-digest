@@ -10,11 +10,11 @@ here as well once the demo machine has Ollama pulled up.
 
 | dataset | schema | needs-you recall | decision recall | attribution | groups | messages | surfaced | latency s |
 |---|---|---|---|---|---|---|---|---|
-| fixtures\discord | ok | 100% | 100% | 100% | 1 | 246 | 7 | 0.081 |
-| fixtures\telegram | ok | 100% | 100% | 100% | 1 | 266 | 15 | 0.085 |
-| fixtures\whatsapp\android | ok | 100% | 100% | 100% | 1 | 325 | 15 | 0.095 |
-| fixtures\whatsapp\edge_cases | ok | 100% | 100% | 100% | 1 | 11 | 12 | 0.053 |
-| fixtures\whatsapp\hinglish | ok | 100% | 100% | 100% | 1 | 285 | 15 | 0.074 |
-| fixtures\whatsapp\ios | ok | 100% | 100% | 100% | 1 | 10 | 5 | 0.03 |
-| eval\datasets\base | ok | 100% | 100% | 100% | 1 | 503 | 15 | 0.133 |
-| eval\datasets\hinglish | ok | 100% | 100% | 100% | 1 | 504 | 15 | 0.135 |
+| fixtures\discord | ok | 100% | 100% | 100% | 1 | 246 | 7 | 0.038 |
+| fixtures\telegram | ok | 100% | 100% | 100% | 1 | 266 | 15 | 0.039 |
+| fixtures\whatsapp\android | ok | 100% | 100% | 100% | 1 | 325 | 15 | 0.038 |
+| fixtures\whatsapp\edge_cases | ok | 100% | 100% | 100% | 1 | 11 | 12 | 0.016 |
+| fixtures\whatsapp\hinglish | ok | 100% | 100% | 100% | 1 | 285 | 15 | 0.044 |
+| fixtures\whatsapp\ios | ok | 100% | 100% | 100% | 1 | 10 | 5 | 0.015 |
+| eval\datasets\base | ok | 100% | 100% | 100% | 1 | 503 | 15 | 0.068 |
+| eval\datasets\hinglish | ok | 100% | 100% | 100% | 1 | 504 | 15 | 0.09 |

@@ -73,7 +73,7 @@ class ScriptedPipelineClient(LLMClient):
     def _extract(self, prompt: str) -> str:
         decisions: list[dict] = []
         questions: list[dict] = []
-        per_person: list[dict] = []
+        per_person: dict[str, list[str]] = {}
         seen: set[str] = set()
         for raw_line in prompt.splitlines():
             match = _MESSAGE_LINE.match(raw_line.strip())
@@ -96,17 +96,17 @@ class ScriptedPipelineClient(LLMClient):
                         questions.append(
                             {"message_id": message_id, "question": fact["text"]}
                         )
-                    if not any(p["name"] == sender for p in per_person):
-                        per_person.append(
-                            {"name": sender, "points": ["surfaced planted facts"]}
-                        )
+                    per_person.setdefault(sender, [])
+                    if fact["text"] not in per_person[sender]:
+                        per_person[sender].append(fact["text"])
+        people = [{"name": name, "points": points} for name, points in per_person.items()]
         return json.dumps(
             {
                 "topics": [],
                 "decisions": decisions,
                 "questions_for_user": questions,
                 "deadlines": [],
-                "per_person": per_person,
+                "per_person": people,
             },
             ensure_ascii=False,
         )
