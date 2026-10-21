@@ -20,6 +20,9 @@ class Settings(BaseSettings):
 
     model: str = Field(default="gemma3:4b", description="Ollama model tag (SLOTH_MODEL).")
     ollama_url: str = Field(default="http://localhost:11434")
+    embed_model: str = Field(
+        default="nomic-embed-text", description="Local Ollama embedding model (SLOTH_EMBED_MODEL)."
+    )
     db_path: str = Field(default="./data/sloth.db")
     drop_folder: str = Field(default="./data/drop")
     digest_time: str = Field(default="06:00", description="Daily schedule, local time HH:MM.")

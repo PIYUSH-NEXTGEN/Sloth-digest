@@ -10,6 +10,7 @@ across overlapping exports - required for safe attribution references (7.4).
 """
 
 import hashlib
+import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +18,7 @@ from typing import Any
 
 from app.models import Digest, Message, Platform
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 
 _MIGRATIONS: list[str] = [
     # v1
@@ -60,6 +61,13 @@ _MIGRATIONS: list[str] = [
         model TEXT NOT NULL,
         prompt_version TEXT NOT NULL,
         json TEXT NOT NULL
+    );
+    """,
+    # v2 (A5.1 hybrid retrieval: local, in-db message embeddings)
+    """
+    CREATE TABLE IF NOT EXISTS embeddings (
+        message_id TEXT PRIMARY KEY REFERENCES messages(id),
+        embedding TEXT NOT NULL
     );
     """,
 ]
@@ -266,3 +274,56 @@ class Store:
 
     def close(self) -> None:
         self._conn.close()
+
+    # -- embeddings (A5.1: stored locally, JSON float arrays) ------------
+
+    def embeddable_messages(self, limit: int = 500) -> list[Message]:
+        rows = self._conn.execute(
+            """
+            SELECT m.* FROM messages m
+            LEFT JOIN embeddings e ON e.message_id = m.id
+            WHERE e.message_id IS NULL AND m.is_system = 0
+            ORDER BY m.timestamp DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [self._row_to_message(row) for row in rows]
+
+    def save_embedding(self, message_id: str, vector: list[float]) -> None:
+        self._conn.execute(
+            "INSERT INTO embeddings (message_id, embedding) VALUES (?, ?) "
+            "ON CONFLICT(message_id) DO UPDATE SET embedding = excluded.embedding",
+            (message_id, json.dumps(vector)),
+        )
+
+    def flush_embeddings(self) -> None:
+        self._conn.commit()
+
+    def existing_embeddings(self) -> dict[str, list[float]]:
+        rows = self._conn.execute("SELECT message_id, embedding FROM embeddings").fetchall()
+        return {row["message_id"]: json.loads(row["embedding"]) for row in rows}
+
+    @staticmethod
+    def _row_to_message(row: sqlite3.Row) -> Message:
+        return Message(
+            id=row["id"],
+            platform=Platform(row["platform"]),
+            conversation_id=row["conversation_id"],
+            sender=row["sender"],
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            text=row["text"],
+            reply_to=row["reply_to"],
+            is_system=bool(row["is_system"]),
+        )
+
+    def get_message(self, message_id: str) -> Message | None:
+        row = self._conn.execute("SELECT * FROM messages WHERE id = ?", (message_id,)).fetchone()
+        return self._row_to_message(row) if row is not None else None
+
+    def all_messages(self, limit: int = 2000) -> list[Message]:
+        rows = self._conn.execute(
+            "SELECT * FROM messages WHERE is_system = 0 ORDER BY timestamp DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [self._row_to_message(row) for row in rows]

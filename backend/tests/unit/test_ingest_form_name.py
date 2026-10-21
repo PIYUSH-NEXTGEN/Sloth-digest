@@ -5,6 +5,9 @@ the field as a query parameter, so Frontend uploads (FormData) fell back to
 the file stem as conversation name (7.12: exports carry no group name).
 """
 
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.config import get_settings
@@ -13,7 +16,9 @@ from app.main import create_app
 SAMPLE = "19/10/2026, 20:02 - Riya: camp is booked for the 21st"
 
 
-def test_conversation_name_form_field_is_honored(tmp_path, monkeypatch) -> None:
+def test_conversation_name_form_field_is_honored(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("SLOTH_DB_PATH", str(tmp_path / "sloth.db"))
     monkeypatch.setenv("SLOTH_DROP_FOLDER", str(tmp_path / "drop"))
     (tmp_path / "drop").mkdir()

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.ask import router as ask_router
 from app.api.digest import router as digest_router
 from app.api.health import router as health_router
 from app.api.ingest import router as ingest_router
@@ -13,6 +14,7 @@ from app.config import APP_VERSION, Settings, get_settings
 from app.ingest.watcher import DropFolderWatcher
 from app.llm.client import LLMClient, OllamaClient
 from app.observability.sentry import init_sentry
+from app.retrieval.embeddings import OllamaEmbedder
 from app.scheduler import DigestScheduler
 from app.store.db import Store
 from app.store.user_settings import UserSettings
@@ -63,10 +65,12 @@ def create_app(
     app.state.digest_scheduler = DigestScheduler(
         instance, app.state.llm, user_settings, watcher, env_settings=settings
     )
+    app.state.embedder = OllamaEmbedder(settings.ollama_url, settings.embed_model)
     app.include_router(health_router)
     app.include_router(ingest_router)
     app.include_router(digest_router)
     app.include_router(settings_router)
+    app.include_router(ask_router)
     return app
 
 
