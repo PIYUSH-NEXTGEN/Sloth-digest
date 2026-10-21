@@ -8,6 +8,11 @@
     "Riya",
     "Priya"
   ],
+  "user_identifiers": [
+    "Priya",
+    "prids",
+    "pris"
+  ],
   "start": "2026-10-19T20:00:26",
   "end": "2026-10-20T05:58:51",
   "message_count": 506,
@@ -17,42 +22,48 @@
       "text": "let's meet Saturday 6pm",
       "sender": "Riya",
       "at": "2026-10-20T05:04:28",
-      "message_id": "m-340519a7f9"
+      "message_id": "m-340519a7f9",
+      "superseded_by": "m-bdc34ec453"
     },
     {
       "kind": "correction",
       "text": "meeting is at Saturday 7pm",
       "sender": "Ishita",
       "at": "2026-10-19T22:37:49",
-      "message_id": "m-bdc34ec453"
+      "message_id": "m-bdc34ec453",
+      "superseded_by": null
     },
     {
       "kind": "question_for_user",
       "text": "@Priya can you drive on Saturday or take the bus?",
       "sender": "Riya",
       "at": "2026-10-20T00:15:07",
-      "message_id": "m-136b0e8ae3"
+      "message_id": "m-136b0e8ae3",
+      "superseded_by": null
     },
     {
       "kind": "deadline",
       "text": "send booking amount by Friday",
       "sender": "Ishita",
       "at": "2026-10-19T20:19:45",
-      "message_id": "m-067de9ca83"
+      "message_id": "m-067de9ca83",
+      "superseded_by": null
     },
     {
       "kind": "mention_user",
       "text": "prids you owe the group zoodles",
       "sender": "Sam",
       "at": "2026-10-20T02:06:28",
-      "message_id": "m-29415370be"
+      "message_id": "m-29415370be",
+      "superseded_by": null
     },
     {
       "kind": "banter",
       "text": "😂😂",
       "sender": "Sam",
       "at": "2026-10-20T04:34:09",
-      "message_id": "m-f7c4e17c7c"
+      "message_id": "m-f7c4e17c7c",
+      "superseded_by": null
     }
   ],
   "skipped_lower_bound": 1

@@ -1,11 +1,60 @@
 {
   "platform": "whatsapp",
   "conversation_name": "trek squad (edge cases)",
-  "participants": ["Priya", "Riya", "Kabir", "Aman", "Nikhil", "🦥 Lazy Panda", "14127778901", "+1 412 777 8901"],
+  "participants": [
+    "Priya",
+    "Riya",
+    "Kabir",
+    "Aman",
+    "Nikhil",
+    "🦥 Lazy Panda",
+    "14127778901",
+    "+1 412 777 8901"
+  ],
+  "user_identifiers": [
+    "Priya",
+    "prids"
+  ],
   "start": "2026-10-19T20:00:00",
   "end": "2026-10-20T06:00:00",
   "message_count": 18,
   "skipped_lower_bound": 0,
-  "planted_facts": [],
+  "planted_facts": [
+    {
+      "kind": "decision",
+      "sender": "Riya",
+      "text": "camp is booked for the 21st, get sleeping bags as well",
+      "message_id": "edge:0001",
+      "at": "2026-10-19T20:02:00"
+    },
+    {
+      "kind": "decision",
+      "sender": "Priya",
+      "text": "rooms sorted, forest guest house",
+      "message_id": "edge:0002",
+      "at": "2026-10-19T21:30:00"
+    },
+    {
+      "kind": "question_for_user",
+      "sender": "Priya",
+      "text": "@prids are you in for the picture folder?",
+      "message_id": "edge:0003",
+      "at": "2026-10-19T21:31:00"
+    },
+    {
+      "kind": "deadline",
+      "sender": "The Lazy Panda",
+      "text": "7 pm sharp, no sliding out of bed",
+      "message_id": "edge:0004",
+      "at": "2026-10-19T23:55:00"
+    },
+    {
+      "kind": "deadline",
+      "sender": "Aman",
+      "text": "reminder for tomorrow: bring the fixed bag",
+      "message_id": "edge:0005",
+      "at": "2026-10-19T23:57:00"
+    }
+  ],
   "notes": "Hand-crafted SYNTHETIC edge-case export mixing Android and iOS lines in one file: 24h and 12h times, PM/AM both with and without seconds, multiline continuations, system lines (banner, join invite, changed subject, missed voice call via named sender, you-left, security code changed), <Media omitted>, phone-number senders in two formats, emoji-with-space sender, @nickname mention, blank lines. Unambiguously DD/MM (days 19-21). All names/numbers invented."
 }

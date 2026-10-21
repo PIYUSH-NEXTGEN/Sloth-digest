@@ -81,6 +81,7 @@ class PlantedFact:
     sender: str
     at: datetime
     message_id: str = field(init=False)
+    superseded_by: str | None = None
 
     def __post_init__(self) -> None:
         digest = hashlib.sha256(f"{self.kind}|{self.text}|{self.sender}".encode()).hexdigest()
@@ -143,10 +144,12 @@ def plant_facts(
                            at=timeline[rng.randrange(len(timeline))][0])
 
     alias = rng.choice(USER_ALIASES)
-    # 1. decision
-    facts.append(message_from(rng.choice(others), "decision", CONFLICT_POOL[0]))
-    # 2. correction which supersedes decision 1
-    facts.append(message_from(rng.choice(others), "correction", CONFLICT_POOL[1]))
+    # 1. decision ... 2. correction which supersedes it (9.3 reduce rule)
+    base = message_from(rng.choice(others), "decision", CONFLICT_POOL[0])
+    facts.append(base)
+    correction = message_from(rng.choice(others), "correction", CONFLICT_POOL[1])
+    facts.append(correction)
+    base.superseded_by = correction.message_id
     # 3. question directed at USER
     facts.append(message_from(rng.choice(others), "question_for_user",
                               f"@{USER} can you drive on Saturday or take the bus?"))
@@ -240,6 +243,7 @@ def write_dataset(
         "platform": platform,
         "conversation_name": conv_name,
         "participants": participants,
+        "user_identifiers": [USER] + USER_ALIASES,
         "start": timeline[0][0].isoformat(),
         "end": timeline[-1][0].isoformat(),
         "message_count": len(timeline),
