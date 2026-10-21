@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ollama_url: str = Field(default="http://localhost:11434")
     context_tokens: int = Field(
         default=16384,
-        description="Ollama num_ctx; prompt larger than this gets silently truncated (SLOTH_CONTEXT_TOKENS).",
+        description="Ollama num_ctx (SLOTH_CONTEXT_TOKENS); larger prompts get silently truncated.",
     )
     embed_model: str = Field(
         default="nomic-embed-text", description="Local Ollama embedding model (SLOTH_EMBED_MODEL)."
