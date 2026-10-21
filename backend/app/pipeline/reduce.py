@@ -212,7 +212,12 @@ def build_group_digest(
         questions.extend(extract.questions_for_user)
     scored = score_messages(messages, questions, scoring_config)
     needs_you: list[NeedsYouItem] = []
+    seen_summaries: set[str] = set()
     for _score, item in scored[:10]:
+        summary_key = item.summary.strip().lower()
+        if summary_key in seen_summaries:
+            continue
+        seen_summaries.add(summary_key)
         needs_you.append(item.model_copy(update={"suggested_reply": suggested_reply_draft(item)}))
     referenced = _referenced_ids(extracts, questions)
     skipped = sum(1 for m in messages if m.id not in referenced and not m.is_system)

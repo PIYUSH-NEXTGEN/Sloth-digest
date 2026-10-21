@@ -117,6 +117,56 @@ async def extract_chunk(
     if unexpected:
         raise ValueError(f"unexpected extract keys: {sorted(unexpected)}")
     try:
-        return ChunkExtract.model_validate(data)
+        extract = ChunkExtract.model_validate(data)
     except Exception as exc:
         raise ValueError(f"extract JSON failed validation: {exc}") from exc
+    return _resolve_ids(extract, chunk)
+
+
+def _resolve_ids(extract: ChunkExtract, chunk: Chunk) -> ChunkExtract:
+    """Fix model-shortened ids: a unique suffix of one chunk message id resolves.
+
+    Models keep shortening `whatsapp:conv:hash` to the hash despite rules. An
+    id that matches no chunk message (or matches ambiguously) is dropped, so
+    invented ids can never survive reconstruction.
+    """
+    known = {m.id for m in chunk.messages}
+    by_suffix: dict[str, set[str]] = {}
+    for message_id in known:
+        for i in range(6, len(message_id) + 1):
+            by_suffix.setdefault(message_id[-i:], set()).add(message_id)
+
+    def resolve(real_ids: list[str]) -> list[str]:
+        resolved: list[str] = []
+        for raw_id in real_ids:
+            if raw_id in known:
+                resolved.append(raw_id)
+            else:
+                matches = by_suffix.get(raw_id, set())
+                if len(matches) == 1:
+                    resolved.append(matches.pop())
+                elif len(matches) > 1:
+                    raise ValueError(f"ambiguous message id suffix: {raw_id}")
+        return list(dict.fromkeys(resolved))
+
+    decisions = []
+    for decision in extract.decisions:
+        message_ids = resolve(decision.message_ids)
+        if message_ids:
+            decisions.append(Decision(text=decision.text, message_ids=message_ids))
+    deadlines = []
+    for deadline in extract.deadlines:
+        message_ids = resolve(deadline.message_ids)
+        if message_ids:
+            deadlines.append(
+                Deadline(text=deadline.text, when=deadline.when, message_ids=message_ids)
+            )
+    questions = [q for q in extract.questions_for_user if q.message_id in known]
+    extract = extract.model_copy(
+        update={
+            "decisions": decisions,
+            "deadlines": deadlines,
+            "questions_for_user": questions,
+        }
+    )
+    return extract
