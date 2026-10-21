@@ -45,7 +45,6 @@ export default function App() {
           >
             Digest
           </button>
-          {" · "}
           <button
             type="button"
             className={route === "sources" ? "active" : ""}
@@ -53,7 +52,6 @@ export default function App() {
           >
             Sources
           </button>
-          {" · "}
           <button
             type="button"
             className={route === "settings" ? "active" : ""}
