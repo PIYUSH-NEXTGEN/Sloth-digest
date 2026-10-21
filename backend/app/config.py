@@ -24,6 +24,13 @@ class Settings(BaseSettings):
         default=16384,
         description="Ollama num_ctx (SLOTH_CONTEXT_TOKENS); larger prompts get silently truncated.",
     )
+    llm_timeout_seconds: float = Field(
+        default=900.0,
+        description=(
+            "Ollama read timeout (SLOTH_LLM_TIMEOUT_SECONDS); CPU inference on "
+            "several-K-token chunk prompts can take minutes per call."
+        ),
+    )
     embed_model: str = Field(
         default="nomic-embed-text", description="Local Ollama embedding model (SLOTH_EMBED_MODEL)."
     )
