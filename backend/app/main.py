@@ -5,10 +5,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.digest import router as digest_router
 from app.api.health import router as health_router
 from app.api.ingest import router as ingest_router
 from app.config import APP_VERSION, Settings, get_settings
 from app.ingest.watcher import DropFolderWatcher
+from app.llm.client import LLMClient, OllamaClient
 from app.store.db import Store
 
 
@@ -30,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         store.close()
 
 
-def create_app(store: Store | None = None) -> FastAPI:
+def create_app(store: Store | None = None, llm: LLMClient | None = None) -> FastAPI:
     settings = get_settings()
     instance = store if store is not None else Store(settings.db_path)
     app = FastAPI(
@@ -41,8 +43,10 @@ def create_app(store: Store | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.store = instance
+    app.state.llm = llm if llm is not None else OllamaClient(settings.ollama_url, settings.model)
     app.include_router(health_router)
     app.include_router(ingest_router)
+    app.include_router(digest_router)
     return app
 
 

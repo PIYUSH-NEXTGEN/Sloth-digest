@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     drop_folder: str = Field(default="./data/drop")
     digest_time: str = Field(default="06:00", description="Daily schedule, local time HH:MM.")
     user_names: list[str] = Field(default_factory=lambda: ["Your Name", "nickname"])
+    vip_people: list[str] = Field(
+        default_factory=list, description="Extra important senders (VIP)."
+    )
+    keywords: list[str] = Field(
+        default_factory=list, description="Extra importance keywords beyond the defaults."
+    )
     sentry_dsn: str = Field(default="", description="Empty = Sentry disabled.")
     elevenlabs_api_key: str = Field(default="", description="Empty = voice disabled.")
     temporal_enabled: bool = Field(default=False)
