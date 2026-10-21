@@ -66,12 +66,24 @@ export const handlers = [
     return HttpResponse.json(sampleDigest);
   }),
 
-  http.post("*/ask", () =>
-    HttpResponse.json(
-      { detail: "Ask is not implemented yet (Phase 5)" },
-      { status: 501 },
-    ),
-  ),
+  http.post("*/ask", async ({ request }) => {
+    const body = (await request.json()) as { question?: string };
+    if (!body.question || body.question.trim().length === 0) {
+      return HttpResponse.json(
+        { detail: "Question must not be empty" },
+        { status: 422 },
+      );
+    }
+    return HttpResponse.json({
+      answer:
+        "Aman is collecting booking amounts and wants your share by Friday (Rs. 3,000 budget was capped on Saturday).",
+      sources: [
+        "whatsapp:trip-planning:000123",
+        "whatsapp:trip-planning:000131",
+        "discord:cricket-squad:000028",
+      ],
+    });
+  }),
 
   http.get("*/settings", () =>
     HttpResponse.json(DEFAULT_SETTINGS satisfies Settings),

@@ -89,11 +89,12 @@ point the Vite dev server at the backend and upload `data/demo/chat.txt`.
 ## Evaluation
 
 The pipeline is measured against synthetic datasets only (seeded generator,
-planted facts, no real chats): 8 datasets across WhatsApp (Android/iOS,
-Hinglish, edge cases), Discord, and Telegram, 240–500 messages each. Each run
-ingests the export through the real HTTP API and scores the produced digest
-against the planted ground truth. See [eval/report.md](eval/report.md) and
-[eval/run_eval.py](eval/run_eval.py) for details.
+planted facts, no real chats): 9 datasets across WhatsApp (Android/iOS,
+Hinglish, edge cases), Discord (incl. an emoji-noise-heavy set), and Telegram,
+240–500 messages each. Each run ingests the export through the real HTTP API
+and scores the produced digest against the planted ground truth. See
+[eval/report.md](eval/report.md) and [eval/run_eval.py](eval/run_eval.py) for
+details.
 
 The table below is the `--fake` baseline: the LLM step is replaced by
 `ScriptedPipelineClient`, a deterministic stand-in that answers prompts with
@@ -105,7 +106,11 @@ scoring, attribution), not a model. Real Ollama numbers land with `--live`.
 - **decision recall: 100%** (corrections supersede their original decision)
 - **attribution accuracy: 100%** — "who said what" is rebuilt from the parsed
   message store, never from model output, so this is 100% by construction
-- schema validity: 8/8 digests (canonical JSON Schema)
+- schema validity: 9/9 digests (canonical JSON Schema)
+
+Fine-tune comparison (baseline vs tuned on the same eval set, via
+`finetune/compare.py`) lands after the first Tinker training run — it needs a
+`TINKER_API_KEY` and is the one remaining eval item.
 
 ## License
 

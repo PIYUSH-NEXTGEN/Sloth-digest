@@ -453,6 +453,17 @@ ul.summary-list li {
   border-style: dashed;
 }
 
+/* ---- ask page ---------------------------------------------------------- */
+
+.source-id {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--paper-field);
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.35rem;
+}
+
 /* ---- responsive --------------------------------------------------------- */
 
 @media (max-width: 560px) {

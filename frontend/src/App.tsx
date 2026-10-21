@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
+import AskPage from "./pages/Ask";
 import DigestPage from "./pages/Digest";
 import SourcesPage from "./pages/Sources";
 import SettingsPage from "./pages/Settings";
 
-export type Route = "digest" | "sources" | "settings";
+export type Route = "digest" | "ask" | "sources" | "settings";
 
 const DEFAULT_ROUTE: Route = "digest";
 
 function currentRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, "").toLowerCase();
-  if (hash === "sources" || hash === "settings") {
+  if (hash === "ask" || hash === "sources" || hash === "settings") {
     return hash;
   }
   return DEFAULT_ROUTE;
@@ -47,6 +48,13 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={route === "ask" ? "active" : ""}
+            onClick={() => navigate("ask")}
+          >
+            Ask
+          </button>
+          <button
+            type="button"
             className={route === "sources" ? "active" : ""}
             onClick={() => navigate("sources")}
           >
@@ -63,6 +71,7 @@ export default function App() {
       </header>
       <main>
         {route === "digest" ? <DigestPage /> : null}
+        {route === "ask" ? <AskPage /> : null}
         {route === "sources" ? <SourcesPage /> : null}
         {route === "settings" ? <SettingsPage /> : null}
       </main>
