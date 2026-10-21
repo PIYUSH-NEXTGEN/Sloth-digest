@@ -59,6 +59,10 @@ ignore_missing_imports = true
 module = "make_dataset"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["compare", "train_tinker"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
