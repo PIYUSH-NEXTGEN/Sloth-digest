@@ -27,11 +27,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "backend"))
 
-from app.config import get_settings  # noqa: E402
-from app.llm.client import FakeLLMClient  # noqa: E402
-from app.main import create_app  # noqa: E402
-
-from fastapi.testclient import TestClient  # noqa: E402
+from app.config import get_settings
+from app.llm.client import FakeLLMClient
+from app.main import create_app
+from fastapi.testclient import TestClient
 
 
 @dataclass
