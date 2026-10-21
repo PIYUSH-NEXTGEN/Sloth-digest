@@ -46,6 +46,8 @@ class OllamaClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
+            # keep the model resident across long sequential pipeline calls
+            "keep_alive": "30m",
             "options": {
                 "num_predict": max_tokens,
                 "temperature": temperature,
