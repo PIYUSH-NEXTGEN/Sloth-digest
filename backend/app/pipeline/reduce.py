@@ -14,6 +14,7 @@ SlothDigest never sends anything.
 """
 
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -221,6 +222,9 @@ def build_group_digest(
         needs_you.append(item.model_copy(update={"suggested_reply": suggested_reply_draft(item)}))
     referenced = _referenced_ids(extracts, questions)
     skipped = sum(1 for m in messages if m.id not in referenced and not m.is_system)
+    deadlines = _clean_deadlines(result.deadlines, window)
+    decisions = _clean_decisions(result.decisions)
+    by_person = _dedupe_persons(result.per_person)
     return GroupDigest(
         conversation_id=conversation_id,
         platform=platform,
@@ -229,7 +233,68 @@ def build_group_digest(
         skipped_count=skipped,
         tldr=result.tldr[:400],
         needs_you=needs_you,
-        decisions=result.decisions,
-        by_person=result.per_person,
-        deadlines=result.deadlines,
+        decisions=decisions,
+        by_person=by_person,
+        deadlines=deadlines,
     )
+
+
+_YEAR_RE = re.compile(r"\b(20\d{2})\b")
+
+
+def _clean_deadlines(
+    deadlines: list[Deadline], window: Window
+) -> list[Deadline]:
+    """Drop guessed years (models invent them) and dedupe repeat texts."""
+    window_years = {window.start.year, window.end.year}
+    cleaned: dict[str, Deadline] = {}
+    for deadline in deadlines:
+        when = deadline.when
+        if when is not None:
+            match = _YEAR_RE.search(when)
+            if match is not None and int(match.group(1)) not in window_years:
+                when = None
+        key = deadline.text.strip().lower()
+        if key in cleaned:
+            merged = list(
+                dict.fromkeys(cleaned[key].message_ids + deadline.message_ids)
+            )
+            cleaned[key] = Deadline(
+                text=cleaned[key].text, when=cleaned[key].when or when, message_ids=merged
+            )
+        else:
+            cleaned[key] = Deadline(
+                text=deadline.text, when=when, message_ids=list(deadline.message_ids)
+            )
+    return list(cleaned.values())
+
+
+def _clean_decisions(decisions: list[Decision]) -> list[Decision]:
+    """Merge repeat decision texts (models restate the same fact per chunk)."""
+    cleaned: dict[str, Decision] = {}
+    for decision in decisions:
+        key = decision.text.strip().lower()
+        if key in cleaned:
+            merged = list(
+                dict.fromkeys(cleaned[key].message_ids + decision.message_ids)
+            )
+            cleaned[key] = Decision(text=cleaned[key].text, message_ids=merged)
+        else:
+            cleaned[key] = Decision(
+                text=decision.text, message_ids=list(decision.message_ids)
+            )
+    return list(cleaned.values())
+
+
+def _dedupe_persons(per_person: list[PersonPoints]) -> list[PersonPoints]:
+    cleaned: dict[str, PersonPoints] = {}
+    for person in per_person:
+        points = [p for p in dict.fromkeys(person.points) if p.strip()]
+        if not points:
+            continue
+        if person.name in cleaned:
+            merged = list(dict.fromkeys(cleaned[person.name].points + points))[:8]
+            cleaned[person.name] = PersonPoints(name=person.name, points=merged)
+        else:
+            cleaned[person.name] = PersonPoints(name=person.name, points=points[:8])
+    return list(cleaned.values())
