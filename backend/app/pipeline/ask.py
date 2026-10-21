@@ -6,7 +6,6 @@ to the model, intersected with ids it cited - no invented "sources".
 """
 
 import logging
-import re
 from dataclasses import dataclass
 from importlib import resources
 
@@ -19,7 +18,6 @@ from app.store.db import Store
 
 logger = logging.getLogger(__name__)
 
-_CITATION_RE = re.compile(r"\[([a-z]+:[^:\s]+):([0-9a-f]+|\d+)\]")
 _TIMESTAMP_FMT = "%H:%M"
 
 
@@ -44,12 +42,15 @@ def format_context(messages: list[Message]) -> str:
 
 
 def extract_citations(text: str, available: set[str]) -> list[str]:
-    """[id] citations appearing in the answer text, limited to context ids."""
-    found: list[str] = []
-    for match in _CITATION_RE.finditer(text):
-        candidate = f"{match.group(1)}:{match.group(2)}"
-        if candidate in available and candidate not in found:
-            found.append(candidate)
+    """Context ids appearing anywhere in the answer, in first-mention order.
+
+    Models cite loosely (`[id]`, `[id [07:14]]`, `[a, b]`, bare ids, and id
+    shapes vary by platform), so match the actual ids instead of a regex.
+    """
+    found = sorted(
+        (text.find(message_id), message_id) for message_id in available if message_id in text
+    )
+    return [message_id for _pos, message_id in found]
     return found
 
 

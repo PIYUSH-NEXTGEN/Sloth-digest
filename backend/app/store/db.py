@@ -261,16 +261,21 @@ class Store:
     # -- search (FTS5; Phase 5 'ask' will build on this) -----------------
 
     def search(self, query: str, limit: int = 20) -> list[str]:
+        return [row[0] for row in self.search_ranked(query, limit)]
+
+    def search_ranked(self, query: str, limit: int = 20) -> list[tuple[str, float]]:
+        """(message_id, bm25) best-first; bm25 is negative, smaller = better."""
         rows = self._conn.execute(
             """
-            SELECT m.id FROM messages m
+            SELECT m.id, bm25(messages_fts) AS rank FROM messages m
             JOIN messages_fts fts ON m.rowid = fts.rowid
             WHERE messages_fts MATCH ?
+            ORDER BY rank
             LIMIT ?
             """,
             (query, limit),
         ).fetchall()
-        return [row["id"] for row in rows]
+        return [(row["id"], row["rank"]) for row in rows]
 
     def close(self) -> None:
         self._conn.close()

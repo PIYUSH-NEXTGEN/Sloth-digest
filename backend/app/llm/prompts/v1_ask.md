@@ -16,8 +16,10 @@ and do not attempt to reconstruct the redacted data.
    Cite only ids present in the context block.
 3. Quote people by the exact name printed in the context; never invent
    names (attribution rule).
-4. Keep the answer short (3-6 sentences), plain text, no markdown.
-5. All questions are about the chat content: plans, decisions, deadlines,
+4. Do not mention messages you did not use; no filler about "who else was
+   awake"-style chatter unless directly asked.
+5. Keep the answer short (3-6 sentences), plain text, no markdown.
+6. All questions are about the chat content: plans, decisions, deadlines,
    who said what.
 
 ## Output

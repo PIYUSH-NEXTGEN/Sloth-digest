@@ -107,8 +107,14 @@ def hybrid_candidates(
 ) -> list[tuple[str, float]]:
     """Union of lexical + semantic candidates as (message_id, score)."""
     staged: dict[str, float] = {}
-    for message_id in store.search(question_norm(question_text), limit=fts_limit):
-        staged[message_id] = max(staged.get(message_id, 0.0), 1.0)
+    ranked = store.search_ranked(question_norm(question_text), limit=fts_limit)
+    if ranked:
+        worst = max(bm25 for _message_id, bm25 in ranked)
+        floor = abs(worst) if worst < 0 else 1.0
+        for message_id, bm25 in ranked:
+            # lex matches are cheap (any shared word); damp them so additive
+            # semantic blending decides the real ranking
+            staged[message_id] = 0.5 * min(1.0, max(1e-6, -bm25) / floor)
     vectors = store.existing_embeddings()
     sims: list[tuple[float, str]] = []
     for message_id, vector in vectors.items():
@@ -117,7 +123,8 @@ def hybrid_candidates(
     for score, message_id in sims[:semantic_limit]:
         if score < _MIN_SEMANTIC_SIM:
             continue
-        staged[message_id] = max(staged.get(message_id, 0.0), score)
+        # additive blend: evidence matching BOTH signals outranks one-signal hits
+        staged[message_id] = staged.get(message_id, 0.0) + 0.8 * score
     return sorted(staged.items(), key=lambda pair: pair[1], reverse=True)
 
 

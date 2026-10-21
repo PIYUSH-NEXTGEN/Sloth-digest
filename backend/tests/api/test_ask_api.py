@@ -57,6 +57,16 @@ def test_extract_citations_only_uses_context_ids() -> None:
     assert extract_citations(text, available) == ["whatsapp:g1:000001"]
 
 
+def test_extract_citations_tolerates_loose_formats(store: Store) -> None:
+    available = {"whatsapp:g1:000001", "whatsapp:g1:000002"}
+    text = (
+        "Riya asked Priya about the bus "
+        "[whatsapp:g1:000001 [07:14]]. Venue reply cites two at once "
+        "[whatsapp:g1:000002, whatsapp:g1:000001]."
+    )
+    assert extract_citations(text, available) == ["whatsapp:g1:000001", "whatsapp:g1:000002"]
+
+
 def test_ensure_embeddings_idempotent(store: Store) -> None:
     embedder = FakeEmbedder()
 
