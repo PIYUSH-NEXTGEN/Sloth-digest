@@ -42,6 +42,9 @@ class OllamaClient:
         )
 
     async def complete(self, prompt: str, *, max_tokens: int, temperature: float) -> str:
+        # Connection: close — pooled keep-alive sockets to local Ollama go
+        # half-dead on Windows and the next request stalls interminably.
+        headers = {"Connection": "close"}
         payload = {
             "model": self.model,
             "prompt": prompt,
@@ -56,7 +59,7 @@ class OllamaClient:
                 "num_ctx": self.context_tokens,
             },
         }
-        resp = await self._client.post("/api/generate", json=payload)
+        resp = await self._client.post("/api/generate", json=payload, headers=headers)
         resp.raise_for_status()
         data = resp.json()
         response = data.get("response")
