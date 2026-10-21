@@ -60,16 +60,22 @@ class FakeLLMClient:
     """Returns scripted responses in order; raises when the script runs dry.
 
     Compose with the pipeline's retry/fallback logic in tests: an empty script
-    simulates the LLM failing so the fallback path is exercised.
+    simulates the LLM failing so the fallback path is exercised. Pass
+    ``default=...`` to instead answer all further calls with a canned reply.
     """
 
-    def __init__(self, responses: Sequence[str], model: str = "fake") -> None:
+    def __init__(
+        self, responses: Sequence[str], model: str = "fake", default: str | None = None
+    ) -> None:
         self.model = model
         self.calls: list[dict[str, str]] = []
         self._responses = list(responses)
+        self._default = default
 
     async def complete(self, prompt: str, *, max_tokens: int, temperature: float) -> str:
         self.calls.append({"prompt": prompt, "max_tokens": str(max_tokens)})
-        if not self._responses:
+        if self._responses:
+            return self._responses.pop(0)
+        if self._default is None:
             raise RuntimeError("FakeLLMClient script is empty")
-        return self._responses.pop(0)
+        return self._default

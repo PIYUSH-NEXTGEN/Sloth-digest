@@ -89,6 +89,13 @@ def _merge_extracts(extracts: list[ChunkExtract]) -> ReduceResult:
     )
 
 
+def heuristic_reduce(extracts: list[ChunkExtract]) -> ReduceResult:
+    """LLM-free merge (agent.md A2.5 fallback): mechanical merge + tl;dr."""
+    merged = _merge_extracts(extracts)
+    merged.tldr = merged.tldr or _fallback_tldr(merged)
+    return merged
+
+
 def _fallback_tldr(result: ReduceResult, topic_cap: int = 3) -> str:
     parts: list[str] = []
     topics = result.topics[:topic_cap]

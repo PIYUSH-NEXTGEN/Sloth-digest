@@ -15,7 +15,7 @@ from app.llm.prompts import PROMPT_VERSION
 from app.models import Digest, GroupDigest, Message, Window
 from app.pipeline.chunk import Chunk, chunk_messages
 from app.pipeline.extract import ChunkExtract, extract_chunk
-from app.pipeline.reduce import ReduceResult, build_group_digest, reduce_extract
+from app.pipeline.reduce import ReduceResult, build_group_digest, heuristic_reduce, reduce_extract
 from app.pipeline.score import ScoringConfig
 from app.pipeline.validate import validate_group_digest
 from app.store.db import Store
@@ -72,12 +72,18 @@ async def run_digest(
         chunks = chunk_messages(messages)
         extracts = await _extracts_for_chunks(client, chunks)
         result: ReduceResult
-        result, _used_prompt = await reduce_extract(
-            client,
-            extracts=extracts,
-            conversation_name=conv["name"],
-            window=window,
-        )
+        try:
+            result, _used_prompt = await reduce_extract(
+                client,
+                extracts=extracts,
+                conversation_name=conv["name"],
+                window=window,
+            )
+        except ValueError as exc:
+            # Heuristic fallback (agent.md A2.5): LLM keeps failing -> merge
+            # mechanically, still scoring needs-you deterministically.
+            logger.warning("reduce failed, using heuristic merge: %s", exc)
+            result = heuristic_reduce(extracts)
         group = build_group_digest(
             conversation_id=conv["id"],
             platform=conv["platform"],
