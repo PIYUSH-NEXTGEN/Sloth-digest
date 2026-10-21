@@ -34,11 +34,13 @@ async def test_ollama_client_returns_text() -> None:
         assert payload["stream"] is False
         assert payload["options"]["num_predict"] == 256
         assert payload["options"]["temperature"] == 0.2
+        assert payload["options"]["num_ctx"] == 4096
         return httpx.Response(200, json=body)
 
     client = OllamaClient(
         ollama_url="http://localhost:11434",
         model="gemma3:4b",
+        context_tokens=4096,
         transport=httpx.MockTransport(handler),
     )
     out = await client.complete("summarize", max_tokens=256, temperature=0.2)

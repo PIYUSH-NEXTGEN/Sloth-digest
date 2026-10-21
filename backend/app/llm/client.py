@@ -29,10 +29,12 @@ class OllamaClient:
         model: str,
         *,
         timeout_seconds: float = 120.0,
+        context_tokens: int = 16384,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self.ollama_url = ollama_url.rstrip("/")
         self.model = model
+        self.context_tokens = context_tokens
         self._client = httpx.AsyncClient(
             base_url=self.ollama_url,
             timeout=httpx.Timeout(timeout_seconds),
@@ -44,7 +46,13 @@ class OllamaClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {"num_predict": max_tokens, "temperature": temperature},
+            "options": {
+                "num_predict": max_tokens,
+                "temperature": temperature,
+                # Ollama silently truncates long prompts without this
+                # (digest chunk prompts run ~6K tokens; gemma3 caps at 128K)
+                "num_ctx": self.context_tokens,
+            },
         }
         resp = await self._client.post("/api/generate", json=payload)
         resp.raise_for_status()

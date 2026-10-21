@@ -20,6 +20,10 @@ class Settings(BaseSettings):
 
     model: str = Field(default="gemma3:4b", description="Ollama model tag (SLOTH_MODEL).")
     ollama_url: str = Field(default="http://localhost:11434")
+    context_tokens: int = Field(
+        default=16384,
+        description="Ollama num_ctx; prompt larger than this gets silently truncated (SLOTH_CONTEXT_TOKENS).",
+    )
     embed_model: str = Field(
         default="nomic-embed-text", description="Local Ollama embedding model (SLOTH_EMBED_MODEL)."
     )

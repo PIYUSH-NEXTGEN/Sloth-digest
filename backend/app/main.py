@@ -57,7 +57,13 @@ def create_app(
     )
     app.state.settings = settings
     app.state.store = instance
-    app.state.llm = llm if llm is not None else OllamaClient(settings.ollama_url, settings.model)
+    app.state.llm = (
+        llm
+        if llm is not None
+        else OllamaClient(
+            settings.ollama_url, settings.model, context_tokens=settings.context_tokens
+        )
+    )
     user_settings = UserSettings(settings)
     app.state.user_settings = user_settings
     watcher = create_watcher(settings, instance)
