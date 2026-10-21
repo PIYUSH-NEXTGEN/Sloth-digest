@@ -415,18 +415,26 @@ def main() -> int:
     )
     parser.add_argument("--live", action="store_true", help="use Ollama-backed client")
     parser.add_argument("--json", dest="json_out", type=Path, help="also write JSON metrics")
+    parser.add_argument(
+        "--only",
+        action="append",
+        help="restrict to datasets whose directory contains this substring (repeatable)",
+    )
     args = parser.parse_args()
     if args.live and args.fake:
         parser.error("--fake and --live are mutually exclusive")
 
     cases = discover_datasets()
+    if args.only:
+        cases = [c for c in cases if any(s in c.directory for s in args.only)]
     if not cases:
         print("no datasets with expected.json found", file=sys.stderr)
         return 1
-    print(f"eval: {len(cases)} datasets, mode={'live' if args.live else 'fake'}")
+    mode = "live" if args.live else "fake"
+    print(f"eval: {len(cases)} datasets, mode={mode}")
     rows = []
     for case in cases:
-        scored, latency = run_case(case, args.live)
+        scored, latency = run_case(case, live=args.live)
         scored["latency_s"] = round(latency, 3)
         rows.append(scored)
         state = "ok" if scored["schema_valid"] else "INVALID"
@@ -436,8 +444,10 @@ def main() -> int:
             f"  attribution={scored['attribution_accuracy']:.0%}"
         )
     if args.json_out:
-        args.json_out.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    write_report(rows)
+        args.json_out.write_text(
+            json.dumps({"mode": mode, "rows": rows}, indent=2), encoding="utf-8"
+        )
+    write_report(rows, mode)
     invalid = [row for row in rows if not row["schema_valid"]]
     if invalid:
         print(f"FAIL: schema-invalid digests: {[row['dataset'] for row in invalid]}")
@@ -445,18 +455,51 @@ def main() -> int:
     return 0
 
 
-def write_report(rows: list[dict]) -> None:
+_REPORT_HEAD = """# SlothDigest eval report
+
+Deterministic runs over synthetic datasets only (no real chats). The
+`scripted` table exercises the full pipeline with `ScriptedPipelineClient`,
+a deterministic stand-in that answers chunk/reduce prompts with
+perfect-content JSON built from each dataset's ground truth -- it measures
+the workflow (chunking, validation, reduce, scoring, attribution), not a
+model. The `gemma3:4b (live Ollama)` table runs the same harness against the
+real local model; its numbers are the honest product-quality bar.
+Regenerate with `uv run --project backend python eval/run_eval.py --fake`
+and `--live`.
+"""
+
+_MODE_BLOCK = {
+    "fake": (
+        "## Scripted workflow baseline\n\n"
+        "Perfect-content stand-in: recall here is the workflow ceiling.\n\n"
+    ),
+    "live": (
+        "## gemma3:4b via live Ollama\n\n"
+        "Real model; residual quality noise (bogus decisions, deadline 'when' "
+        "language) is model-level and tracked under prompt tuning (A5.2).\n\n"
+    ),
+}
+
+
+def _parse_report_sections() -> dict[str, list[str]]:
+    """Recover the other mode's table rows from the existing report."""
+    out: dict[str, list[str]] = {"fake": [], "live": []}
+    path = REPO_ROOT / "eval" / "report.md"
+    if not path.exists():
+        return out
+    current: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## Scripted"):
+            current = "fake"
+        elif line.startswith("## gemma3"):
+            current = "live"
+        elif line.startswith("| ") and current and not line.startswith("| dataset"):
+            out[current].append(line)
+    return out
+
+
+def _mode_table(rows: list[dict]) -> list[str]:
     lines = [
-        "# SlothDigest eval report",
-        "",
-        "Deterministic runs over the synthetic datasets (no real chats).",
-        "`--fake` exercises the full pipeline with `ScriptedPipelineClient`:",
-        "a deterministic stand-in that answers chunk/reduce prompts with",
-        "perfect-content JSON built from each dataset's ground truth. It",
-        "measures the workflow (chunking, validation, reduce, scoring,",
-        "attribution), not a model; `--live` results with real Gemma land",
-        "here as well once the demo machine has Ollama pulled up.",
-        "",
         "| dataset | schema | needs-you recall | decision recall | attribution | groups | messages | surfaced | latency s |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
@@ -467,8 +510,30 @@ def write_report(rows: list[dict]) -> None:
             f" | {row['attribution_accuracy']:.0%} | {row['groups']} | {row['messages_in_window']}"
             f" | {row['surfaced_items']} | {row['latency_s']} |"
         )
+    return lines
+
+
+def write_report(rows: list[dict], mode: str) -> None:
+    sections: dict[str, list[str] | str] = {
+        "fake": _mode_table(rows) if mode == "fake" else None,
+        "live": _mode_table(rows) if mode == "live" else None,
+    }
+    previous = _parse_report_sections()
+    for key in ("fake", "live"):
+        if sections[key] is None:
+            other = previous.get(key, [])
+            sections[key] = other if other else "_(not run yet)_\n"
     out = REPO_ROOT / "eval" / "report.md"
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out.write_text(
+        _REPORT_HEAD
+        + _MODE_BLOCK["fake"]
+        + "\n".join(sections["fake"])
+        + "\n\n"
+        + _MODE_BLOCK["live"]
+        + "\n".join(sections["live"])
+        + "\n",
+        encoding="utf-8",
+    )
     print(f"wrote {out}")
 
 

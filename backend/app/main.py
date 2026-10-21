@@ -61,7 +61,10 @@ def create_app(
         llm
         if llm is not None
         else OllamaClient(
-            settings.ollama_url, settings.model, context_tokens=settings.context_tokens
+            settings.ollama_url,
+            settings.model,
+            context_tokens=settings.context_tokens,
+            timeout_seconds=settings.llm_timeout_seconds,
         )
     )
     user_settings = UserSettings(settings)
